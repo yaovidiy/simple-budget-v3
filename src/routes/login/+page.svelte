@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
 	import { login, register } from '$lib/remotes/auth.remote';
+	import { slide } from 'svelte/transition';
 
 	let activeTab = $state('login');
 
@@ -162,7 +163,7 @@
 
 							<!-- General Issues -->
 							{#each registerForm.fields.allIssues() as issue}
-								<div class="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20">
+								<div transition:slide class="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20">
 									{issue.message}
 								</div>
 							{/each}
