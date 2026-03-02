@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { error, redirect } from '@sveltejs/kit';
 import { query, form, command, getRequestEvent } from '$app/server';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { validateSessionToken, sessionCookieName } from '$lib/server/auth';
@@ -75,6 +75,17 @@ const updateWorkspaceSchema = v.object({
 		v.string(),
 		v.nonEmpty('Workspace name is required'),
 		v.maxLength(100, 'Workspace name must not exceed 100 characters')
+	)
+});
+
+const inviteUserSchema = v.object({
+	workspaceId: v.pipe(
+		v.string(),
+		v.nonEmpty('Workspace ID is required')
+	),
+	username: v.pipe(
+		v.string(),
+		v.nonEmpty('Username is required')
 	)
 });
 
@@ -223,9 +234,78 @@ export const updateWorkspace = form(
 	}
 );
 
+/**
+ * Invite a registered user to a workspace
+ *
+ * @param data - Object containing workspaceId and username
+ * @returns Object with success flag and userId
+ * @throws 401 if not authenticated
+ * @throws 403 if user is not the owner of the workspace
+ * @throws 404 if workspace or user not found
+ * @throws 400 if trying to invite yourself
+ * @throws 409 if user is already a member of the workspace
+ */
+export const inviteUserToWorkspace = form(
+	inviteUserSchema,
+	async ({ workspaceId, username }) => {
+		const user = await getCurrentUser();
+
+		if (!user) {
+			redirect(303, '/login');
+		}
+
+		// Verify caller is the workspace owner
+		await verifyWorkspaceOwner(workspaceId, user.id);
+
+		// Look up the user to invite by username
+		const [inviteeUser] = await db
+			.select()
+			.from(table.user)
+			.where(eq(table.user.username, username));
+
+		if (!inviteeUser) {
+			error(404, 'User not found');
+		}
+
+		// Prevent self-invite
+		if (inviteeUser.id === user.id) {
+			error(400, 'You cannot invite yourself');
+		}
+
+		// Check if user is already a member
+		const [existingMember] = await db
+			.select()
+			.from(table.workspaceMember)
+			.where(and(
+				eq(table.workspaceMember.workspaceId, workspaceId),
+				eq(table.workspaceMember.userId, inviteeUser.id)
+			));
+
+		if (existingMember) {
+			error(409, 'User is already a member of this workspace');
+		}
+
+		// Add user to workspace
+		const now = new Date();
+
+		await db.insert(table.workspaceMember).values({
+			workspaceId,
+			userId: inviteeUser.id,
+			role: 'member',
+			joinedAt: now
+		});
+
+		return {
+			success: true,
+			userId: inviteeUser.id
+		};
+	}
+);
+
 // ============================================================================
 // REMOTE FUNCTIONS - COMMANDS
 // ============================================================================
+
 
 /**
  * Delete a workspace
