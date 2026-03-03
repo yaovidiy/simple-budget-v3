@@ -11,7 +11,7 @@
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run",
+		"test": "bun run test:unit -- --run",
 		"db:push": "drizzle-kit push",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio"
@@ -55,6 +55,7 @@
 		"@oslojs/encoding": "^1.1.0",
 		"better-sqlite3": "^11.1.2",
 		"drizzle-orm": "^0.33.0",
+		"markdownlint-cli": "^0.47.0",
 		"valibot": "^1.2.0"
 	}
 }
