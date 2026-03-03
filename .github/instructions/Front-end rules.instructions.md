@@ -88,6 +88,8 @@ Do NOT destructure reactive proxies; update them directly. Use `$state.raw` for 
 
 - `$effect`: for side effects and cleanup. `$effect.pre` runs before DOM updates; `$effect.root` creates isolated scopes. `$effect.tracking()` is for debugging only.
 
+- `$effect`: Do not use for remote function form status updates; instead, use form enhance methods or explicit state updates.
+
 - `$props`: component inputs: `let { foo = 'x' } = $props();`. Do NOT mutate props; use callbacks or bindable props. Use `$props.id()` for stable instance IDs.
 
 - `$bindable`: opt-in two-way props; prefer one-way flow unless bi-directional binding is required.

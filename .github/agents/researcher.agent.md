@@ -7,7 +7,23 @@ handoffs:
   - label: Start Core Logic Implementation
     agent: Core Logic Agent
     prompt: Now Implement the core logic for the feature based on the research findings. Follow the implementation plan and use the research documentation to guide your development. If no core logic is needed for this feature, explicitly state that in your response and proceed to the next step.
-    send: false
+    send: true
+  - label: Start Backend Implementation
+    agent: SvelteKit Backend Agent
+    prompt: Now implement the backend features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no backend features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
+	- label: Start Frontend Implementation
+    agent: Front End Agent
+    prompt: Now implement the frontend features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no frontend features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
+	- label: Start Testing Implementation
+    agent: Test Agent
+    prompt: Now implement the testing features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no testing features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
+	- label: Start Documentation Implementation
+    agent: Docs Agent
+    prompt: Now implement the documentation features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no documentation features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
 ---
 
 # Research Agent

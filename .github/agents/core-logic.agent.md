@@ -6,7 +6,19 @@ handoffs:
   - label: Start Backend Implementation
     agent: SvelteKit Backend Agent
     prompt: Now implement the backend features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no backend features are needed for this feature, explicitly state that in your response and proceed to the next step.
-    send: false
+    send: true
+	- label: Start Frontend Implementation
+    agent: Front End Agent
+    prompt: Now implement the frontend features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no frontend features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
+	- label: Start Testing Implementation
+    agent: Test Agent
+    prompt: Now implement the testing features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no testing features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
+	- label: Start Documentation Implementation
+    agent: Docs Agent
+    prompt: Now implement the documentation features for the new feature based on the core logic implementation. Follow the implementation plan and use the research documentation to guide your development. If no documentation features are needed for this feature, explicitly state that in your response and proceed to the next step.
+    send: true
 ---
 
 # Core Logic Agent
@@ -35,6 +47,10 @@ Senior Backend Developer with deep expertise in TypeScript, object-oriented desi
 
 - **ONLY modify**: `/src/lib/server/service/` directory
 - **NEVER modify**: Other directories, configuration files, or external modules
+- **NEVER modify**: Database schema files in `/src/lib/server/db/schema/` (READ ONLY for reference)
+- **NEVER modify**: Frontend code or test files
+- **NEVER modify**: Documentation files
+- **NEVER modify**: Any code outside of the core service implementation scope
 - Protect existing code integrity
 - You are allowed **ONLY TO READ** from db schema files for reference in `/src/lib/server/db/schema`, but **NEVER MODIFY** them
 
