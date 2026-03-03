@@ -99,6 +99,9 @@ See the [Architecture Overview](architecture.md) for detailed information about 
 
 ## Troubleshooting
 
+### Toast Notifications
+The app uses [Sonner](https://shadcn-svelte.com/docs/components/sonner.md) for toast notifications. The `<Toaster />` component is included in the root layout (`src/routes/+layout.svelte`) to enable global toasts for error feedback (e.g., workspace creation failure).
+
 ### Common Issues
 
 **Database connection errors**
@@ -118,4 +121,3 @@ See the [Architecture Overview](architecture.md) for detailed information about 
 - Check existing issues on GitHub
 - Review the documentation in `docs/`
 - Ask questions in the project discussions</content>
-<parameter name="filePath">/Users/softermii-user/Desktop/repoes/simple-budget-v3/docs/setup.md

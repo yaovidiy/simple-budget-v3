@@ -98,6 +98,12 @@ The application uses a multi-tenant architecture with workspace-scoped data:
 - Client-side cache management
 - Optimistic updates for better UX
 
+### Home Page Workspace Routing
+When a user visits `/`, the server-side load function checks for workspaces:
+  - If workspaces exist, redirects to `/[workspaceId]` (first workspace).
+  - If no workspaces, the client renders a create workspace dialog.
+Workspace creation uses a remote function and displays toast notifications for errors.
+
 ## Internationalization
 
 - **Paraglide**: Compile-time i18n solution
@@ -136,5 +142,4 @@ The application uses a multi-tenant architecture with workspace-scoped data:
 - **Code Splitting**: Route-based chunking
 - **Image Optimization**: Vite's asset handling
 - **Database Indexing**: Optimized queries with indexes
-- **Caching**: Query result caching where appropriate</content>
-<parameter name="filePath">/Users/softermii-user/Desktop/repoes/simple-budget-v3/docs/architecture.md
+- **Caching**: Query result caching where appropriate

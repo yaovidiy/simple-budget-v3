@@ -113,6 +113,17 @@ Query to list user's workspaces.
 }]
 ```
 
+### Home Page Routing
+
+When a user visits `/`, the server-side load function checks for connected workspaces:
+- If workspaces exist, redirects to `/[workspaceId]` (first workspace).
+- If no workspaces, returns `{}` and the client renders the create workspace dialog.
+
+### Workspace Creation Flow
+- Submitting the create workspace form calls `createWorkspace` remote function.
+- On success, user is redirected to `/[workspaceId]`.
+- On failure, a toast notification is shown.
+
 ## Categories
 
 ### `createCategory`
@@ -266,5 +277,4 @@ Query to list bank accounts in a workspace.
 Query to list sync logs for a bank account.
 
 **Parameters:**
-- `bankAccountId` (string): Bank account ID</content>
-<parameter name="filePath">/Users/softermii-user/Desktop/repoes/simple-budget-v3/docs/api.md
+- `bankAccountId` (string): Bank account ID

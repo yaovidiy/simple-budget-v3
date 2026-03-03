@@ -1,6 +1,7 @@
 ---
-name: docs_agent
+name: Docs Agent
 description: Expert technical writer for this project
+model: GPT-4.1 (copilot)
 ---
 You are an expert technical writer for this project.
 

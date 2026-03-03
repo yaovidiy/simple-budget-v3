@@ -1,11 +1,9 @@
 import * as v from 'valibot';
 import { error, redirect } from '@sveltejs/kit';
 import { query, form, command, getRequestEvent } from '$app/server';
-import { eq, and } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import * as table from '$lib/server/db/schema';
 import { validateSessionToken, sessionCookieName } from '$lib/server/auth';
-import { encodeHexLowerCase } from '@oslojs/encoding';
+import { workspaceService } from '$lib/server/service/workspace.service';
+import { authService } from '$lib/server/service/auth.service';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -33,10 +31,7 @@ async function getCurrentUser() {
  * Verify user is the owner of a workspace
  */
 async function verifyWorkspaceOwner(workspaceId: string, userId: string) {
-	const [workspace] = await db
-		.select()
-		.from(table.workspace)
-		.where(eq(table.workspace.id, workspaceId));
+	const workspace = await workspaceService.read(workspaceId);
 
 	if (!workspace) {
 		error(404, 'Workspace not found');
@@ -106,17 +101,12 @@ export const listWorkspaces = query(async () => {
 		redirect(303, '/login');
 	}
 
-	const workspaces = await db
-		.select({
-			id: table.workspace.id,
-			name: table.workspace.name,
-			createdAt: table.workspace.createdAt,
-			updatedAt: table.workspace.updatedAt
-		})
-		.from(table.workspace)
-		.where(eq(table.workspace.ownerUserId, user.id));
+	const members = await workspaceService.listByUserId(user.id);
+	const workspaces = await Promise.all(members.map((m) => workspaceService.read(m.workspaceId)));
 
-	return workspaces;
+	return workspaces
+		.filter((w): w is NonNullable<typeof w> => w !== null)
+		.map(({ id, name, createdAt, updatedAt }) => ({ id, name, createdAt, updatedAt }));
 });
 
 /**
@@ -165,25 +155,14 @@ export const createWorkspace = form(
 			redirect(303, '/login');
 		}
 
-		const workspaceId = encodeHexLowerCase(crypto.getRandomValues(new Uint8Array(8)));
-		const now = new Date();
-
-		const newWorkspace = {
-			id: workspaceId,
-			ownerUserId: user.id,
-			name,
-			createdAt: now,
-			updatedAt: now
-		};
-
-		await db.insert(table.workspace).values(newWorkspace);
+		const newWorkspace = await workspaceService.create({ name, ownerUserId: user.id });
 
 		// Refresh listWorkspaces query to reflect the new workspace
 		await listWorkspaces().refresh();
 
 		return {
 			success: true,
-			workspaceId
+			workspaceId: newWorkspace.id
 		};
 	}
 );
@@ -209,24 +188,17 @@ export const updateWorkspace = form(
 		// Verify ownership
 		await verifyWorkspaceOwner(workspaceId, user.id);
 
-		const updatedAt = new Date();
-
-		await db
-			.update(table.workspace)
-			.set({
-				name,
-				updatedAt
-			})
-			.where(eq(table.workspace.id, workspaceId));
+		const updated = await workspaceService.update(workspaceId, { name });
 
 		// Update the cached getWorkspace query with new data
-		await getWorkspace(workspaceId).set({
-			id: workspaceId,
-			name,
-			createdAt: (await db.select().from(table.workspace).where(eq(table.workspace.id, workspaceId)))[0]
-				?.createdAt,
-			updatedAt
-		});
+		if (updated) {
+			getWorkspace(workspaceId).set({
+				id: updated.id,
+				name: updated.name,
+				createdAt: updated.createdAt,
+				updatedAt: updated.updatedAt
+			});
+		}
 
 		return {
 			success: true
@@ -258,46 +230,29 @@ export const inviteUserToWorkspace = form(
 		await verifyWorkspaceOwner(workspaceId, user.id);
 
 		// Look up the user to invite by username
-		const [inviteeUser] = await db
-			.select()
-			.from(table.user)
-			.where(eq(table.user.username, username));
+		const invitee = await authService.getUserByUsername(username);
 
-		if (!inviteeUser) {
+		if (!invitee) {
 			error(404, 'User not found');
 		}
 
 		// Prevent self-invite
-		if (inviteeUser.id === user.id) {
+		if (invitee.id === user.id) {
 			error(400, 'You cannot invite yourself');
 		}
 
-		// Check if user is already a member
-		const [existingMember] = await db
-			.select()
-			.from(table.workspaceMember)
-			.where(and(
-				eq(table.workspaceMember.workspaceId, workspaceId),
-				eq(table.workspaceMember.userId, inviteeUser.id)
-			));
-
-		if (existingMember) {
-			error(409, 'User is already a member of this workspace');
+		try {
+			await workspaceService.inviteMember({ workspaceId, userId: invitee.id, role: 'member' });
+		} catch (e) {
+			if (e instanceof Error && e.message.includes('already a member')) {
+				error(409, 'User is already a member of this workspace');
+			}
+			throw e;
 		}
-
-		// Add user to workspace
-		const now = new Date();
-
-		await db.insert(table.workspaceMember).values({
-			workspaceId,
-			userId: inviteeUser.id,
-			role: 'member',
-			joinedAt: now
-		});
 
 		return {
 			success: true,
-			userId: inviteeUser.id
+			userId: invitee.id
 		};
 	}
 );
@@ -325,8 +280,7 @@ export const deleteWorkspace = command(workspaceIdSchema, async (workspaceId) =>
 	// Verify ownership
 	await verifyWorkspaceOwner(workspaceId, user.id);
 
-	// Delete workspace (this will cascade delete related data if configured)
-	await db.delete(table.workspace).where(eq(table.workspace.id, workspaceId));
+	await workspaceService.delete(workspaceId);
 
 	// Refresh listWorkspaces query to reflect the deletion
 	await listWorkspaces().refresh();

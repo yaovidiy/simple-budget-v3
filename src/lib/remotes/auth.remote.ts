@@ -1,12 +1,8 @@
 import * as v from 'valibot';
 import { form, getRequestEvent } from '$app/server';
-import { hash, verify } from '@node-rs/argon2';
-import { db } from '$lib/server/db';
-import * as table from '$lib/server/db/schema';
-import { generateSessionToken, createSession, setSessionTokenCookie } from '$lib/server/auth';
-import { eq } from 'drizzle-orm';
-import { encodeHexLowerCase } from '@oslojs/encoding';
+import { generateSessionToken, createSession, setSessionTokenCookie, validateSessionToken } from '$lib/server/auth';
 import { redirect } from '@sveltejs/kit';
+import { authService } from '$lib/server/service/auth.service';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -55,9 +51,7 @@ const loginSchema = v.object({
  * Register a new user
  *
  * @param data - Object containing username and password
- * @returns Object with success flag and userId
- * @throws Error if username already exists
- * @throws Error if registration fails
+ * @throws Error if username already exists or registration fails
  */
 export const register = form(
 	registerSchema,
@@ -67,39 +61,15 @@ export const register = form(
 			throw new Error('Request event not found');
 		}
 
-		// Check if username already exists
-		const [existingUser] = await db
-			.select()
-			.from(table.user)
-			.where(eq(table.user.username, username));
+		const result = await authService.register({ username, password });
 
-		if (existingUser) {
-			throw new Error('Username already taken');
+		if (!result.success || !result.userId) {
+			throw new Error(result.message ?? 'Registration failed');
 		}
 
-		// Hash password
-		const passwordHash = await hash(password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
-
-		// Create new user
-		const userId = encodeHexLowerCase(crypto.getRandomValues(new Uint8Array(16)));
-
-		const newUser = {
-			id: userId,
-			username,
-			passwordHash,
-			age: null
-		};
-
-		await db.insert(table.user).values(newUser);
-
-		// Create session
+		// Create and persist session (HTTP concern handled in remote)
 		const sessionToken = generateSessionToken();
-		const session = await createSession(sessionToken, userId);
+		const session = await createSession(sessionToken, result.userId);
 		setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
 		redirect(303, '/');
@@ -110,8 +80,7 @@ export const register = form(
  * Login a user
  *
  * @param data - Object containing username and password
- * @returns Object with success flag and userId
- * @throws Error if username not found or password is invalid
+ * @throws Error if credentials are invalid or login fails
  */
 export const login = form(
 	loginSchema,
@@ -121,27 +90,19 @@ export const login = form(
 			throw new Error('Request event not found');
 		}
 
-		// Find user by username
-		const [user] = await db
-			.select()
-			.from(table.user)
-			.where(eq(table.user.username, username));
+		const result = await authService.login({ username, password });
 
-		if (!user) {
-			throw new Error('Invalid username or password');
+		if (!result.success || !result.sessionToken) {
+			throw new Error(result.message ?? 'Login failed');
 		}
 
-		// Verify password
-		const validPassword = await verify(user.passwordHash, password);
-
-		if (!validPassword) {
-			throw new Error('Invalid username or password');
+		// Retrieve session to obtain expiresAt for the cookie
+		const { session } = await validateSessionToken(result.sessionToken);
+		if (!session) {
+			throw new Error('Failed to establish session');
 		}
 
-		// Create session
-		const sessionToken = generateSessionToken();
-		const session = await createSession(sessionToken, user.id);
-		setSessionTokenCookie(event, sessionToken, session.expiresAt);
+		setSessionTokenCookie(event, result.sessionToken, session.expiresAt);
 
 		redirect(303, '/');
 	}

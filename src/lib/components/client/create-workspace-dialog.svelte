@@ -13,11 +13,36 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { createWorkspace } from '$lib/remotes/workspace.remote';
+	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
 	import { slide } from 'svelte/transition';
 
 	let { triggerLabel = 'New Workspace' }: { triggerLabel?: string } = $props();
 
 	let open = $state(false);
+	let wasSubmitting = $state(false);
+
+	$effect(() => {
+		if (createWorkspace.pending) {
+			wasSubmitting = true;
+		}
+	});
+
+	$effect(() => {
+		if (!createWorkspace.pending && wasSubmitting) {
+			const result = createWorkspace.result;
+			const hasIssues = (createWorkspace.fields.allIssues()?.length ?? 0) > 0;
+
+			if (result?.workspaceId) {
+				open = false;
+				goto(`/${result.workspaceId}`);
+			} else if (!hasIssues) {
+				toast.error('Failed to create workspace. Please try again.');
+			}
+
+			wasSubmitting = false;
+		}
+	});
 </script>
 
 <Dialog bind:open>

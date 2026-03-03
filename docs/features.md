@@ -14,6 +14,13 @@ This document outlines the key features implemented in Simple Budget v3, a perso
 - **Workspace Ownership**: Each workspace is owned by a user and can have multiple members.
 - **Workspace Members**: Support for adding team members to workspaces with role-based access (owner/member).
 
+### 2a. Workspace Routing & Creation (Home Page)
+- **Automatic Workspace Routing**: When a user visits the home page (`/`), the app checks for connected workspaces:
+  - If the user has workspaces, they are redirected to the first workspace (`/[workspaceId]`).
+  - If no workspaces exist, the user is prompted to create one using a dialog.
+- **Create Workspace Dialog**: Uses ShadCN UI and remote functions for form submission. On success, user is redirected to the new workspace. On failure, a toast notification appears.
+- **Toast Notifications**: Uses Sonner for error feedback (e.g., workspace creation failure).
+
 ### 3. Transaction Management
 - **Manual Transactions**: Users can manually add income and expense transactions.
 - **Transaction Details**: Comprehensive transaction data including:
@@ -75,5 +82,4 @@ While not yet implemented, the schema supports:
 - Budget planning and goals
 - Receipt scanning and OCR
 - Multi-currency support
-- Export functionality</content>
-<parameter name="filePath">/Users/softermii-user/Desktop/repoes/simple-budget-v3/docs/features.md
+- Export functionality
