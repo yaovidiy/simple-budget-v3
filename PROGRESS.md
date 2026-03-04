@@ -13,6 +13,16 @@
  - Iteration: 3
  - Working on: Task-004
  - Started: 2026-03-04T09:40:00.000Z
+ - Iteration: 4
+ - Working on: Done
+ - Started: 2026-03-04T09:40:00.000Z
+
+## Completed
+
+- [x] Task-001: Write Tag Service Unit Tests (commit: 21beb98)
+- [x] Task-002: Implement TagService (commit: 4334814)
+- [x] Task-003: Create tag.remote.ts and remotes (commit: 1d827c9)
+- [x] Task-004: Create create-tag-dialog.svelte and workspace tag counter (commit: cf60d55)
 
 ## Blockers
 
