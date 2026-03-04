@@ -2,13 +2,14 @@
 
 ## Completed
 
-_None yet_
+- [x] Task-001: Write Tag Service Unit Tests (commit: 21beb98)
+- [x] Task-002: Implement TagService (commit: 4334814)
 
 ## Current Iteration
 
-- Iteration: 1
- - Working on: Task-002
- - Started: 2026-03-04T12:05:00.000Z
+- Iteration: 2
+- Working on: Task-003
+- Started: 2026-03-04T09:27:23.000Z
 
 ## Blockers
 
