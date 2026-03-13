@@ -89,7 +89,7 @@
 						Don't have an account? Click the
 						<button
 							type="button"
-							on:click={() => (activeTab = 'register')}
+							onclick={() => (activeTab = 'register')}
 							class="text-primary hover:underline cursor-pointer font-medium"
 						>
 							Register tab
@@ -184,7 +184,7 @@
 						Already have an account? Click the
 						<button
 							type="button"
-							on:click={() => (activeTab = 'login')}
+							onclick={() => (activeTab = 'login')}
 							class="text-primary hover:underline cursor-pointer font-medium"
 						>
 							Login tab
